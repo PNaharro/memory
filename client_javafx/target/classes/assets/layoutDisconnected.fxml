@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane fx:id="refAnchorPane" prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.project.CtrlLayoutDisconnected">
+<AnchorPane fx:id="refAnchorPane" prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.project.CtrlLayoutDisconnected">
    <children>
       <AnchorPane prefHeight="55.0" style="-fx-background-color: #95c3ff;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
          <children>
@@ -27,6 +27,12 @@
         <Label style="-fx-font-size: 16; -fx-font-weight: 200;" text="Server port" />
         <TextField fx:id="portTextField" maxWidth="200.0" />
     </VBox>
+      <VBox alignment="CENTER" layoutX="320.0" layoutY="79.0" spacing="10.0">
+         <children>
+            <Label style="-fx-font-size: 16; -fx-font-weight: 200;" text="Name" />
+            <TextField fx:id="name" maxWidth="200.0" />
+         </children>
+      </VBox>
 
     <Button layoutX="352.0" layoutY="307.0" minHeight="32.0" minWidth="96.0" onAction="#connectToServer" style="-fx-font-size: 14;" text="Connect" />
    </children>

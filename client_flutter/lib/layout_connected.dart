@@ -1,4 +1,6 @@
+import 'package:client_flutter/components/info_card.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'app_data.dart';
 import 'widget_selectable_list.dart';
@@ -11,151 +13,83 @@ class LayoutConnected extends StatefulWidget {
 }
 
 class _LayoutConnectedState extends State<LayoutConnected> {
-  final ScrollController _scrollController = ScrollController();
-  final _messageController = TextEditingController();
-  final FocusNode _messageFocusNode = FocusNode();
+  @override
+  void initState() {
+    super.initState();
+    Provider.of<AppData>(context, listen: false).initGame();
+  }
 
   @override
   Widget build(BuildContext context) {
-    AppData appData = Provider.of<AppData>(context);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    });
-
-    return CupertinoPageScaffold(
+    return Container(
+      width: 200.0,
+      height: 200.0,
+      child: CupertinoPageScaffold(
         navigationBar: const CupertinoNavigationBar(
-          middle: Text("WebSockets Client"),
+          middle: Text("Memory Game"),
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const SizedBox(height: 52),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(width: 8),
-                const Text(
-                  "Connected to ",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w200),
+            Center(
+              child: Text(
+                Provider.of<AppData>(context, listen: false).status,
+                style: TextStyle(
+                  fontSize: 12.0,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  "ws://${appData.ip}:${appData.port}",
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w400),
-                ),
-                const Text(
-                  ", with ID: ",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w200),
-                ),
-                Text(
-                  "${appData.mySocketId}",
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w400),
-                ),
-                Expanded(child: Container()),
-                SizedBox(
-                  width: 140,
-                  height: 32,
-                  child: CupertinoButton(
-                    onPressed: () {
-                      appData.disconnectFromServer();
-                    },
-                    padding: EdgeInsets.zero,
-                    child: const Text(
-                      "Disconnect",
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(width: 8),
-                  Expanded(
-                      flex: 2,
-                      child: MediaQuery.removePadding(
-                          context: context,
-                          removeTop: true,
-                          child: ListView.builder(
-                              controller: _scrollController,
-                              primary: false,
-                              padding: EdgeInsets.only(
-                                  top: -MediaQuery.of(context).padding.top),
-                              itemCount: 1,
-                              itemBuilder: (BuildContext context, int index) {
-                                return Text(
-                                  appData.messages,
-                                  style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w200),
-                                );
-                              }))),
-                  const SizedBox(width: 8),
-                  Container(
-                      color: const Color.fromRGBO(240, 240, 240, 1),
-                      width: 142,
-                      child: MediaQuery.removePadding(
-                          context: context,
-                          removeTop: true,
-                          child: WidgetSelectableList())),
-                  const SizedBox(width: 8),
-                ],
               ),
             ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(width: 8),
-                const Text(
-                  "Message: ",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w200),
-                ),
-                Expanded(
-                  child: CupertinoTextField(
-                    controller: _messageController,
-                    focusNode: _messageFocusNode,
-                    onSubmitted: (value) {
-                      appData.send(_messageController.text);
-                      _messageController.text = "";
-                      FocusScope.of(context).requestFocus(_messageFocusNode);
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  width: 140,
-                  height: 32,
-                  child: CupertinoButton.filled(
-                    onPressed: () {
-                      appData.send(_messageController.text);
-                      _messageController.text = "";
-                      FocusScope.of(context).requestFocus(_messageFocusNode);
-                    },
-                    padding: EdgeInsets.zero,
-                    child: Text(
-                      appData.selectedClientIndex == null
-                          ? "Broadcast"
-                          : "Send",
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
+            SizedBox(
+              height: 24.0,
             ),
-            const SizedBox(height: 8),
+            SizedBox(
+              height: 600.0,
+              width: 600.0,
+              child: GridView.builder(
+                itemCount: Provider.of<AppData>(context).gameImg!.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                  crossAxisSpacing: 16.0,
+                  mainAxisSpacing: 16.0,
+                  childAspectRatio: 1.0,
+                ),
+                padding: EdgeInsets.all(16.0),
+                itemBuilder: (context, index) {
+                  return IgnorePointer(
+                    ignoring: !Provider.of<AppData>(context).turno,
+                    child: GestureDetector(
+                      onTap: () {
+                        Provider.of<AppData>(context, listen: false)
+                            .handleCardTap(
+                                index,
+                                Provider.of<AppData>(context, listen: false),
+                                (callback) => setState(callback),
+                                context);
+                        Provider.of<AppData>(context, listen: false).adios();
+                      },
+                      child: Container(
+                        padding: EdgeInsets.all(16.0),
+                        decoration: BoxDecoration(
+                          color: Color.fromARGB(255, 0, 0, 0),
+                          borderRadius: BorderRadius.circular(8.0),
+                          image: DecorationImage(
+                            image: AssetImage(
+                                Provider.of<AppData>(context).gameImg![index]),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
           ],
-        ));
+        ),
+      ),
+    );
   }
 }

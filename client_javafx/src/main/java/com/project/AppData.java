@@ -1,6 +1,7 @@
 package com.project;
 
 import org.java_websocket.handshake.ServerHandshake;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.project.AppSocketsClient.OnCloseObject;
@@ -19,22 +20,56 @@ import java.util.Enumeration;
 import java.util.List;
 
 public class AppData {
-
     private static final AppData INSTANCE = new AppData();
     private AppSocketsClient socketClient;
     private String ip = "localhost";
-    private String port = "8888";
+    private String port = "8000";
+    private String name = "";
+    private String rname = "";
     private ConnectionStatus connectionStatus = ConnectionStatus.DISCONNECTED;
     private String mySocketId;
     private List<String> clients = new ArrayList<>();
     private String selectedClient = "";
-    private Integer selectedClientIndex;
+    public Integer selectedClientIndex;
     private StringBuilder messages = new StringBuilder();
+    public List<String> images = new ArrayList<>();
+    public String mov1, mov2;
+    public String nombreBoton = "";
+    private List<MessageListener> messageListeners = new ArrayList<>();
 
+    public int players = 0;
+    public interface MessageListener {
+        void onMessageReceived(String message);
+    }
+
+    public void addMessageListener(MessageListener listener) {
+        messageListeners.add(listener);
+    }
+
+    private void notifyMessageListeners(String message) {
+        for (MessageListener listener : messageListeners) {
+            listener.onMessageReceived(message);
+        }
+    }
     public enum ConnectionStatus {
         DISCONNECTED, DISCONNECTING, CONNECTING, CONNECTED
     }
+    
+    public static String convertirListaAString(List<?> lista) {
+        StringBuilder stringBuilder = new StringBuilder();
 
+        for (Object elemento : lista) {
+            // Añadir el elemento seguido de una coma y un espacio
+            stringBuilder.append(elemento).append(", ");
+        }
+
+        // Eliminar la coma y el espacio final si la lista no está vacía
+        if (!lista.isEmpty()) {
+            stringBuilder.delete(stringBuilder.length() - 2, stringBuilder.length());
+        }
+
+        return stringBuilder.toString();
+    }
     private AppData() {
     }
 
@@ -107,24 +142,27 @@ public class AppData {
 
     private void onOpen (ServerHandshake handshake) {
         System.out.println("Handshake: " + handshake.getHttpStatusMessage());
-        connectionStatus = ConnectionStatus.CONNECTED; 
+        connectionStatus = ConnectionStatus.CONNECTED;
+        
     }
 
     private void onMessage(String message) {
+        notifyMessageListeners(message);
         JSONObject data = new JSONObject(message);
-
         if (connectionStatus != ConnectionStatus.CONNECTED) {
             connectionStatus = ConnectionStatus.CONNECTED;
         }
-
+        System.out.println(data.toString());
         String type = data.getString("type");
         switch (type) {
+            case "nombre":
+                nombrar();
+                break;
             case "list":
                 clients.clear();
                 data.getJSONArray("list").forEach(item -> clients.add(item.toString()));
                 clients.remove(mySocketId);
                 messages.append("List of clients: ").append(data.getJSONArray("list")).append("\n");
-                updateClientList();
                 break;
             case "id":
                 mySocketId = data.getString("value");
@@ -134,7 +172,8 @@ public class AppData {
                 clients.add(data.getString("id"));
                 clients.remove(mySocketId);
                 messages.append("Connected client: ").append(data.getString("id")).append("\n");
-                updateClientList();
+                
+
                 break;
             case "disconnected":
                 String removeId = data.getString("id");
@@ -143,7 +182,7 @@ public class AppData {
                 }
                 clients.remove(data.getString("id"));
                 messages.append("Disconnected client: ").append(data.getString("id")).append("\n");
-                updateClientList();
+
                 break;
             case "private":
                 messages.append("Private message from '")
@@ -152,20 +191,13 @@ public class AppData {
                         .append(data.getString("value"))
                         .append("\n");
                 break;
-            default:
-                messages.append("Message from '")
-                        .append(data.getString("from"))
-                        .append("': ")
-                        .append(data.getString("value"))
-                        .append("\n");
-                break;
         }
         if (connectionStatus == ConnectionStatus.CONNECTED) {
             CtrlLayoutConnected ctrlConnected = (CtrlLayoutConnected) UtilsViews.getController("Connected");
-            ctrlConnected.updateMessages(messages.toString());        
+     
         }
     }
-
+    
     public void onClose(OnCloseObject closeInfo) {
         connectionStatus = ConnectionStatus.DISCONNECTED;
         UtilsViews.setViewAnimating("Disconnected");
@@ -181,12 +213,14 @@ public class AppData {
         socketClient.send(message.toString());
     }
 
-    public void updateClientList() {
-        if (connectionStatus == ConnectionStatus.CONNECTED) {
-            CtrlLayoutConnected ctrlConnected = (CtrlLayoutConnected) UtilsViews.getController("Connected");
-            ctrlConnected.updateClientList(clients);
-        }
+     public void nombrar() {
+        JSONObject message = new JSONObject();
+        message.put("type", "nombre");
+        message.put("plat", "java");
+        message.put("value", name);
+        socketClient.send(message.toString());
     }
+    
 
     public void selectClient(int index) {
         if (selectedClientIndex == null || selectedClientIndex != index) {
@@ -202,18 +236,31 @@ public class AppData {
         return selectedClientIndex;
     }
 
-    public void send(String msg) {
+    public void send(String mov1,String mov2) {
         if (selectedClientIndex == null) {
-            broadcastMessage(msg);
-        } else {
-            privateMessage(msg);
-        }
+            sendmove(mov1,mov2);
+        } 
     }
 
     public void broadcastMessage(String msg) {
         JSONObject message = new JSONObject();
         message.put("type", "broadcast");
         message.put("value", msg);
+        socketClient.send(message.toString());
+    }
+    public void sendTab(String msg) {
+        JSONObject message = new JSONObject();
+        message.put("type", "tablero");
+        message.put("value", msg);
+        socketClient.send(message.toString());
+    }
+    public void sendmove(String mov1,String mov2) {
+        JSONObject message = new JSONObject();
+        message.put("type", "broadcast");
+        message.put("from", "java");
+        message.put("name", name);
+        message.put("value1", mov1);
+        message.put("value2", mov2);
         socketClient.send(message.toString());
     }
 
@@ -234,6 +281,21 @@ public class AppData {
         return this.ip = ip;
     }
 
+    public String getRName() {
+        return rname;
+    }
+
+    public String setRName (String rname) {
+        return this.rname = rname;
+    }
+    public String getName() {
+        return name;
+    }
+
+    public String setName (String name) {
+        return this.name = name;
+    }
+    
     public String getPort() {
         return port;
     }

@@ -32,7 +32,7 @@ public class Main {
 
     public static void main (String[] args) throws InterruptedException, IOException {
 
-        int port = 8888; 
+        int port = 8000; 
         String localIp = getLocalIPAddress();
         System.out.println("Local server IP: " + localIp);
 

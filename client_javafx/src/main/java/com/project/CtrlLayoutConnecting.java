@@ -12,4 +12,8 @@ public class CtrlLayoutConnecting {
     @FXML
     private Text connectingText;
 
+
+
+    
+
 }
